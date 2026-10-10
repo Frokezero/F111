@@ -29,6 +29,7 @@ fun TransactionScreen(
         onAmountChange = viewModel::onAmountChange,
         onTypeChange = viewModel::onTypeChange,
         onSaveClick = viewModel::saveTransaction,
+        onExportClick = viewModel::exportCsv,
         onClearClick = viewModel::clearAllData
     )
 }

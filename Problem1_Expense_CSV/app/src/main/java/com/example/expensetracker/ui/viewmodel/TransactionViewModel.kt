@@ -12,18 +12,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * UI State สำหรับหน้าบันทึกรายรับ-รายจ่าย
- * ถือครองข้อมูลช่องกรอก, ประวัติรายการ, ยอดสุทธิ และสถานะแจ้งเตือน
- */
 data class TransactionUiState(
     val titleInput: String = "",
     val amountInput: String = "",
     val selectedType: TransactionType = TransactionType.EXPENSE,
     val transactions: List<Transaction> = emptyList(),
     val netBalance: Double = 0.0,
-    val statusMessage: String? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val userMessage: String? = null
 )
 
 class TransactionViewModel(
@@ -37,153 +33,157 @@ class TransactionViewModel(
         loadTransactions()
     }
 
-    /**
-     * เปลี่ยนค่าในช่องชื่อรายการ
-     */
     fun onTitleChange(newTitle: String) {
-        _uiState.update { it.copy(titleInput = newTitle, statusMessage = null) }
+        _uiState.update { it.copy(titleInput = newTitle) }
     }
 
-    /**
-     * เปลี่ยนค่าในช่องจำนวนเงิน
-     */
     fun onAmountChange(newAmount: String) {
-        // กรองรับเฉพาะตัวเลขและจุดทศนิยม
-        if (newAmount.isEmpty() || newAmount.matches(Regex("^\\d*\\.?\\d*$"))) {
-            _uiState.update { it.copy(amountInput = newAmount, statusMessage = null) }
+        if (newAmount.isEmpty() || newAmount.toDoubleOrNull() != null) {
+            _uiState.update { it.copy(amountInput = newAmount) }
         }
     }
 
-    /**
-     * สลับประเภทรายการ (รายรับ / รายจ่าย)
-     */
-    fun onTypeChange(type: TransactionType) {
-        _uiState.update { it.copy(selectedType = type) }
+    fun onTypeChange(newType: TransactionType) {
+        _uiState.update { it.copy(selectedType = newType) }
     }
 
-    /**
-     * อ่านข้อมูลไฟล์ CSV และคำนวณยอดเงินคงเหลือสุทธิ
-     */
-    fun loadTransactions() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val result = repository.getAllTransactions()
-            result.onSuccess { list ->
-                val balance = calculateNetBalance(list)
-                _uiState.update {
-                    it.copy(
-                        transactions = list,
-                        netBalance = balance,
-                        isLoading = false
-                    )
-                }
-            }.onFailure { error ->
-                _uiState.update {
-                    it.copy(
-                        statusMessage = "เกิดข้อผิดพลาดในการอ่านไฟล์: ${error.localizedMessage}",
-                        isLoading = false
-                    )
-                }
-            }
-        }
-    }
-
-    /**
-     * บันทึกรายการใหม่ (Append ลงในไฟล์ CSV)
-     */
     fun saveTransaction() {
-        val currentState = _uiState.value
-        val title = currentState.titleInput.trim()
-        val amount = currentState.amountInput.toDoubleOrNull()
+        val current = _uiState.value
+        val title = current.titleInput.trim()
+        val amount = current.amountInput.toDoubleOrNull()
 
         if (title.isBlank()) {
-            _uiState.update { it.copy(statusMessage = "กรุณาระบุชื่อรายการ") }
+            _uiState.update { it.copy(userMessage = "กรุณากรอกชื่อรายการ") }
+            return
+        }
+        if (amount == null || amount <= 0) {
+            _uiState.update { it.copy(userMessage = "กรุณากรอกจำนวนเงินให้ถูกต้อง (> 0)") }
             return
         }
 
-        if (amount == null || amount <= 0.0) {
-            _uiState.update { it.copy(statusMessage = "กรุณาระบุจำนวนเงินให้ถูกต้อง") }
-            return
-        }
-
-        val (currentDate, currentTime) = Transaction.currentDateTime()
-        val newTransaction = Transaction(
-            date = currentDate,
-            time = currentTime,
+        val (dateStr, timeStr) = Transaction.currentDateTime()
+        val transaction = Transaction(
+            date = dateStr,
+            time = timeStr,
             title = title,
             amount = amount,
-            type = currentState.selectedType
+            type = current.selectedType
         )
 
         viewModelScope.launch {
-            val result = repository.saveTransaction(newTransaction)
-            result.onSuccess {
-                // เคลียร์ฟอร์มกรอก และโหลดข้อมูลใหม่จากไฟล์ CSV
-                _uiState.update {
-                    it.copy(
-                        titleInput = "",
-                        amountInput = "",
-                        statusMessage = "บันทึกข้อมูลเรียบร้อยแล้ว"
-                    )
+            _uiState.update { it.copy(isLoading = true) }
+            repository.saveTransaction(transaction)
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            titleInput = "",
+                            amountInput = "",
+                            userMessage = "บันทึกข้อมูลเรียบร้อยแล้ว"
+                        )
+                    }
+                    loadTransactionsInternal()
                 }
-                loadTransactions()
-            }.onFailure { error ->
-                _uiState.update {
-                    it.copy(statusMessage = "บันทึกข้อมูลล้มเหลว: ${error.localizedMessage}")
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            userMessage = "บันทึกข้อมูลล้มเหลว: ${error.localizedMessage}"
+                        )
+                    }
                 }
-            }
         }
     }
 
-    /**
-     * ล้างข้อมูล (ลบไฟล์ CSV และเคลียร์หน้าจอ)
-     */
-    fun clearData() {
+    fun exportCsv() {
         viewModelScope.launch {
-            val result = repository.clearAllTransactions()
-            result.onSuccess {
+            _uiState.update { it.copy(isLoading = true) }
+            repository.exportCsvToDownloads()
+                .onSuccess { path ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            userMessage = "ส่งออกไฟล์ CSV สำเร็จ: $path"
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            userMessage = "ส่งออกไฟล์ล้มเหลว: ${error.localizedMessage}"
+                        )
+                    }
+                }
+        }
+    }
+
+    fun clearAllData() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            repository.clearAllTransactions()
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            titleInput = "",
+                            amountInput = "",
+                            transactions = emptyList(),
+                            netBalance = 0.0,
+                            isLoading = false,
+                            userMessage = "ล้างข้อมูลทั้งหมดแล้ว"
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            userMessage = "ล้างข้อมูลล้มเหลว: ${error.localizedMessage}"
+                        )
+                    }
+                }
+        }
+    }
+
+    fun loadTransactions() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            loadTransactionsInternal()
+        }
+    }
+
+    private suspend fun loadTransactionsInternal() {
+        repository.getAllTransactions()
+            .onSuccess { list ->
+                val income = list.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
+                val expense = list.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+                val net = income - expense
+
                 _uiState.update {
                     it.copy(
-                        titleInput = "",
-                        amountInput = "",
-                        transactions = emptyList(),
-                        netBalance = 0.0,
-                        statusMessage = "ล้างข้อมูลทั้งหมดเรียบร้อยแล้ว"
+                        transactions = list,
+                        netBalance = net,
+                        isLoading = false
                     )
                 }
-            }.onFailure { error ->
+            }
+            .onFailure { error ->
                 _uiState.update {
-                    it.copy(statusMessage = "ลบไฟล์ล้มเหลว: ${error.localizedMessage}")
+                    it.copy(
+                        isLoading = false,
+                        userMessage = "โหลดข้อมูลล้มเหลว: ${error.localizedMessage}"
+                    )
                 }
             }
-        }
     }
 
-    /**
-     * คำนวณยอดเงินคงเหลือสุทธิ (รายรับทั้งหมด หักลบด้วย รายจ่ายทั้งหมด)
-     */
-    private fun calculateNetBalance(list: List<Transaction>): Double {
-        var totalIncome = 0.0
-        var totalExpense = 0.0
-        for (item in list) {
-            when (item.type) {
-                TransactionType.INCOME -> totalIncome += item.amount
-                TransactionType.EXPENSE -> totalExpense += item.amount
-            }
-        }
-        return totalIncome - totalExpense
+    fun userMessageShown() {
+        _uiState.update { it.copy(userMessage = null) }
     }
 
-    /**
-     * Factory สำหรับสร้าง TransactionViewModel พร้อมส่ง Dependency (Repository)
-     */
     class Factory(private val repository: TransactionRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(TransactionViewModel::class.java)) {
-                return TransactionViewModel(repository) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
+            return TransactionViewModel(repository) as T
         }
     }
 }

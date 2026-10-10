@@ -94,6 +94,29 @@ class TransactionViewModel(
         }
     }
 
+    fun exportCsv() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            repository.exportCsvToDownloads()
+                .onSuccess { path ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            userMessage = "ส่งออกไฟล์ CSV สำเร็จ: $path"
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            userMessage = "ส่งออกไฟล์ล้มเหลว: ${error.localizedMessage}"
+                        )
+                    }
+                }
+        }
+    }
+
     fun clearAllData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }

@@ -1,30 +1,35 @@
 package com.example.expensetracker.ui.screen
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensetracker.ui.viewmodel.TransactionViewModel
 
-/**
- * Stateful Composable (Screen):
- * เชื่อมโยงกับ ViewModel และดึง StateFlow ออกมาส่งต่อให้ Stateless Composable (TransactionContent)
- * ตามหลัก State Hoisting ของ Jetpack Compose
- */
 @Composable
 fun TransactionScreen(
-    viewModel: TransactionViewModel,
-    modifier: Modifier = Modifier
+    viewModel: TransactionViewModel
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.userMessage) {
+        uiState.userMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.userMessageShown()
+        }
+    }
 
     TransactionContent(
-        state = uiState,
+        uiState = uiState,
+        snackbarHostState = snackbarHostState,
         onTitleChange = viewModel::onTitleChange,
         onAmountChange = viewModel::onAmountChange,
         onTypeChange = viewModel::onTypeChange,
         onSaveClick = viewModel::saveTransaction,
-        onClearClick = viewModel::clearData,
-        modifier = modifier
+        onExportClick = viewModel::exportCsv,
+        onClearClick = viewModel::clearAllData
     )
 }
