@@ -17,11 +17,22 @@ class ProductRepositoryImpl(
 
     private val tableName = "products"
 
-    /**
-     * R - Read: ดึงข้อมูลสินค้าทั้งหมดจากตาราง products เรียงลำดับจากรายการล่าสุด (id DESC)
-     */
+    // In-memory fallback สำหรับการทดสอบเมื่อยังไม่ได้ใส่ Key จริง
+    private val mockProducts = mutableListOf(
+        Product(id = 2L, productName = "น้ำผึ้งแท้ป่าเดือนห้า", stockQty = 15, price = 250.0),
+        Product(id = 1L, productName = "ข้าวหอมมะลิชุมชน 5 กก.", stockQty = 30, price = 180.0)
+    )
+
+    private fun isPlaceholderUrl(): Boolean {
+        return supabaseClient.supabaseUrl.contains("YOUR_PROJECT_ID", ignoreCase = true)
+    }
+
     override suspend fun getProducts(): Result<List<Product>> =
         withContext(Dispatchers.IO) {
+            if (isPlaceholderUrl()) {
+                return@withContext Result.success(mockProducts.toList())
+            }
+
             try {
                 val products = supabaseClient.from(tableName)
                     .select {
@@ -30,15 +41,18 @@ class ProductRepositoryImpl(
                     .decodeList<Product>()
                 Result.success(products)
             } catch (e: Exception) {
-                Result.failure(e)
+                Result.failure(Exception("ไม่สามารถดึงข้อมูลจาก Supabase: ${e.localizedMessage}"))
             }
         }
 
-    /**
-     * C - Create: ยิงคำสั่ง insert เพื่อบันทึกแถวใหม่ขึ้นฐานข้อมูลบน Supabase
-     */
     override suspend fun addProduct(product: Product): Result<Unit> =
         withContext(Dispatchers.IO) {
+            if (isPlaceholderUrl()) {
+                val newId = (mockProducts.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
+                mockProducts.add(0, product.copy(id = newId))
+                return@withContext Result.success(Unit)
+            }
+
             try {
                 supabaseClient.from(tableName).insert(product)
                 Result.success(Unit)
@@ -47,11 +61,16 @@ class ProductRepositoryImpl(
             }
         }
 
-    /**
-     * U - Update: ส่งคำสั่ง update ไปแก้ไขค่า stock_qty ในฐานข้อมูลตาม ID ทันที
-     */
     override suspend fun updateStock(id: Long, newStock: Int): Result<Unit> =
         withContext(Dispatchers.IO) {
+            if (isPlaceholderUrl()) {
+                val index = mockProducts.indexOfFirst { it.id == id }
+                if (index != -1) {
+                    mockProducts[index] = mockProducts[index].copy(stockQty = newStock)
+                }
+                return@withContext Result.success(Unit)
+            }
+
             try {
                 supabaseClient.from(tableName).update(
                     {
@@ -68,11 +87,13 @@ class ProductRepositoryImpl(
             }
         }
 
-    /**
-     * D - Delete: ส่งคำสั่ง delete ลบแถวข้อมูลนั้นออกจาก Supabase ตาม ID ที่ระบุ
-     */
     override suspend fun deleteProduct(id: Long): Result<Unit> =
         withContext(Dispatchers.IO) {
+            if (isPlaceholderUrl()) {
+                mockProducts.removeAll { it.id == id }
+                return@withContext Result.success(Unit)
+            }
+
             try {
                 supabaseClient.from(tableName).delete {
                     filter {
