@@ -1,137 +1,86 @@
-# 📚 คู่มือคำอธิบายซอร์สโค้ดอย่างละเอียด (Complete Master Guide)
-### โครงสร้างแอปรวมข้อสอบปฏิบัติ Android ด้วย Kotlin (CSV & Supabase)
-
-โปรเจกต์นี้ได้รับการพัฒนาและรวมศูนย์ (Consolidated) ให้เป็นแอปพลิเคชัน Android ที่สมบูรณ์ สามารถสลับใช้งานระหว่าง **ข้อ 1 (บันทึกรายรับ-รายจ่าย CSV)** และ **ข้อ 2 (สต็อกสินค้า Supabase)** ได้อย่างสะดวกผ่าน Navigation Bar ด้านล่าง
-
-🔗 **GitHub Repository:** [https://github.com/Frokezero/F111.git](https://github.com/Frokezero/F111.git)
+# 📚 คู่มือฉบับสมบูรณ์และการเตรียมตัวนำเสนอผลงาน (Master Submission Guide)
+### ข้อสอบปฏิบัติการพัฒนา Android ด้วย Kotlin
 
 ---
 
-## 🏛️ สถาปัตยกรรมภาพรวม (Architecture Overview)
-
-โปรเจกต์นี้ถูกออกแบบโดยยึดหลัก **MVVM (Model-View-ViewModel)** ร่วมกับ **Repository Pattern** และ **State Hoisting** ใน **Jetpack Compose**:
-
-```
- ┌─────────────────────────────────────────────────────────┐
- │                      VIEW LAYER                         │
- │  (Jetpack Compose: MainActivity / Screen / Content)     │
- └───────────────────────────┬─────────────────────────────┘
-                             │ StateFlow / User Events
- ┌───────────────────────────▼─────────────────────────────┐
- │                    VIEWMODEL LAYER                      │
- │      (TransactionViewModel / ProductViewModel)          │
- └───────────────────────────┬─────────────────────────────┘
-                             │ Coroutines (viewModelScope)
- ┌───────────────────────────▼─────────────────────────────┐
- │                    REPOSITORY LAYER                     │
- │   (TransactionRepositoryImpl / ProductRepositoryImpl)   │
- └─────────────┬─────────────────────────────┬─────────────┘
-               │ Dispatchers.IO              │ Dispatchers.IO
- ┌─────────────▼─────────────┐ ┌─────────────▼─────────────┐
- │  Internal File Storage    │ │   Supabase Cloud DB       │
- │    (transactions.csv)     │ │    (PostgreSQL REST)      │
- └───────────────────────────┘ └─────────────────────────┘
-```
+### 👤 ข้อมูลนักศึกษา
+- **ชื่อ-นามสกุล:** นายกฤษฎา ศรีคิลิน
+- **รหัสนักศึกษา:** 67102122111
+- **รายวิชา:** การปฏิบัติการพัฒนา Android ด้วย Kotlin (Android Mobile Development)
+- **วันเวลาที่นำเสนอ:** วันที่ 11 ตุลาคม 2569 เวลา 9:00 น. เป็นต้นไป (ห้องพักครู ชั้น 3 อาคาร 7)
+- **GitHub Repository:** [https://github.com/Frokezero/F111.git](https://github.com/Frokezero/F111.git)
 
 ---
 
-## 📖 อธิบายซอร์สโค้ดทุกส่วนอย่างละเอียด (Detailed Code Explanation)
+## 📑 สรุปการให้คะแนนตามเกณฑ์ (Scoring Rubrics Checklist)
+
+### 🟢 ข้อที่ 1: ระบบบันทึกรายรับ-รายจ่ายส่วนบุคคลด้วยไฟล์ CSV (15 คะแนนเต็ม)
+| เกณฑ์ | รายละเอียดการประเมิน | จุดตรวจในซอร์สโค้ด | คะแนน |
+|---|---|---|:---:|
+| **1. สถาปัตยกรรม MVVM & Repository** | แยก Model, Repository, ViewModel, View ชัดเจน / ไม่มี Business Logic หรือ File I/O ใน UI / หมุนจอแล้ว State ไม่หาย | [TransactionRepository.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/expense/data/repository/TransactionRepository.kt) & [TransactionViewModel.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/expense/ui/viewmodel/TransactionViewModel.kt) | **4** |
+| **2. ระบบไฟล์ CSV (บันทึก/อ่าน/ลบ/ส่งออก)** | Append ข้อมูลลง `.csv` ถูกต้อง / Parse บรรทัดต่อบรรทัด / ลบไฟล์จริง / **ส่งออกไฟล์ CSV จริงไปที่โฟลเดอร์ Downloads** | [TransactionRepositoryImpl.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/expense/data/repository/TransactionRepositoryImpl.kt) (`exportCsvToDownloads()`) | **4** |
+| **3. การคำนวณและแสดงผล (Business Logic)** | คำนวณยอดสุทธิ (รายรับ - รายจ่าย) ถูกต้อง / LazyColumn แสดงชื่อ, วันที่, เวลา, จำนวนเงินแยกสี | [TransactionContent.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/expense/ui/screen/TransactionContent.kt) | **3** |
+| **4. UI ด้วย Jetpack Compose** | Layout สวยงามตามโจทย์ / RadioButton, OutlinedTextField, Card, Button / **รองรับ Adaptive 2-Column Split ในแนวนอน** | [TransactionContent.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/expense/ui/screen/TransactionContent.kt) | **2** |
+| **5. Thread Safety (Coroutines)** | `Dispatchers.IO` สำหรับ File I/O / `viewModelScope.launch` เบื้องหลัง ไม่เกิด UI Freeze | มีการครอบ `withContext(Dispatchers.IO)` ทุกฟังก์ชัน | **2** |
+| **รวม** | | | **15** |
 
 ---
 
-### 🟢 ส่วนที่ 1: ข้อ 1 ระบบบันทึกรายรับ-รายจ่ายส่วนบุคคลด้วยไฟล์ CSV (`feature/expense`)
-
-#### 1.1 `data/model/Transaction.kt` (Model & Serialization)
-- **`TransactionType`**: Enum Class ระบุประเภทรายการ (`INCOME` หรือ `EXPENSE`) มี companion object `fromString()` ช่วยแปลงข้อความภาษาไทย/อังกฤษเป็น Enum อย่างปลอดภัย
-- **`Transaction`**: Data Class เก็บฟิลด์ `date`, `time`, `title`, `amount`, `type`
-  - **`toCsvRow()`**: แปลง Data Class เป็น String แถว CSV เช่น `2026-10-10,12:08,Salary,15000.0,INCOME\n` โดยทำความสะอาดเครื่องหมาย comma ในชื่อรายการเพื่อป้องกันโครงสร้าง CSV เสียหาย
-  - **`fromCsvRow()`**: Parse บรรทัด CSV String กลับเป็น `Transaction?` โดยแยกตามเครื่องหมาย comma
-  - **`currentDateTime()`**: สร้างคู่ String วันที่ (`yyyy-MM-dd`) และเวลา (`HH:mm`) ปัจจุบันด้วย `SimpleDateFormat`
-
-#### 1.2 `data/repository/TransactionRepository.kt` & `TransactionRepositoryImpl.kt` (File I/O Pipeline)
-- **`TransactionRepository`**: Interface กำหนดสัญญาการทำงาน (Contract): `saveTransaction`, `getAllTransactions`, `clearAllTransactions`
-- **`TransactionRepositoryImpl`**:
-  - **`csvFile`**: อ้างอิงพาธ `context.filesDir/transactions.csv` (Internal Storage)
-  - **`saveTransaction()`**: ครอบด้วย `withContext(Dispatchers.IO)` เปิด `FileOutputStream(csvFile, true)` (Append Mode) เพื่อเขียนแถวต่อท้ายโดยไม่ทับของเดิม
-  - **`getAllTransactions()`**: เปิดอ่านด้วย `bufferedReader().useLines` อ่านทีละบรรทัด แปลงเป็น List แล้วเรียงรายการล่าสุดขึ้นก่อนด้วย `.reversed()`
-  - **`clearAllTransactions()`**: ตรวจสอบหากไฟล์มีอยู่ ให้สั่ง `csvFile.delete()` เพื่อลบไฟล์ออกจากเครื่องจริง
-
-#### 1.3 `ui/viewmodel/TransactionViewModel.kt` (State Management & Business Logic)
-- **`TransactionUiState`**: Immutable Data Class ถือครอง UI State ทั้งหมด (`titleInput`, `amountInput`, `selectedType`, `transactions`, `netBalance`, `isLoading`, `userMessage`)
-- **`TransactionViewModel`**:
-  - **`_uiState`**: ใช้ `MutableStateFlow` และเปิดเผยเป็น Read-only `StateFlow` ผ่าน `uiState`
-  - **`saveTransaction()`**:
-    1. ตรวจสอบความถูกต้องของข้อมูล (Validation) ชื่อห้ามว่าง และจำนวนเงินต้อง > 0
-    2. เรียก `repository.saveTransaction()` ใน `viewModelScope.launch`
-    3. เมื่อสำเร็จให้ล้างช่องกรอกข้อมูล อัปเดตข้อความแจ้งเตือน และโหลดรายการใหม่
-  - **`loadTransactionsInternal()`**: คำนวณ **ยอดคงเหลือสุทธิ (Net Balance)** โดยกรองหาผลรวมรายรับ (`INCOME`) หักลบด้วยผลรวมรายจ่าย (`EXPENSE`)
-  - **`clearAllData()`**: เรียกสั่งลบไฟล์ CSV และเคลียร์รายการบนหน้าจอทั้งหมด
-  - **`ViewModelProvider.Factory`**: Custom Factory สำหรับ Pass `TransactionRepository` เข้า ViewModel
-
-#### 1.4 `ui/screen/TransactionScreen.kt` & `TransactionContent.kt` (Jetpack Compose UI)
-- **State Hoisting**:
-  - **`TransactionScreen`** (Stateful): ทำหน้าที่สังเกตการณ์ `uiState` ด้วย `collectAsStateWithLifecycle()` และจัดการ Snackbar
-  - **`TransactionContent`** (Stateless): ทำหน้าที่แสดงผล UI Components ตามข้อมูลที่รับเข้ามา
-- **UI Components**:
-  - **Card ยอดคงเหลือสุทธิ**: แสดงผลยอดสุทธิ์ เปลี่ยนสีตัวเลขเป็นสีเขียวเมื่อยอด $\ge 0$ และสีแดงเมื่อติดลบ
-  - **OutlinedTextField & RadioButton**: ฟอร์มรับข้อมูลชื่อรายการ จำนวนเงิน และเลือกประเภท (รายรับ/รายจ่าย)
-  - **Button & OutlinedButton**: ปุ่ม "บันทึกข้อมูล" และปุ่ม "ล้างข้อมูล"
-  - **LazyColumn & Card**: แสดงรายการประวัติแต่ละแถว มีการจัดฟอร์แมตตัวเลขด้วย `DecimalFormat("#,##0.00")`
+### 🔵 ข้อที่ 2: ระบบจัดการสต็อกสินค้าชุมชนบน Cloud Database (Supabase) (15 คะแนนเต็ม)
+| เกณฑ์ | รายละเอียดการประเมิน | จุดตรวจในซอร์สโค้ด | คะแนน |
+|---|---|---|:---:|
+| **1. ความครบถ้วนของ CRUD** | Create (Insert แถวใหม่) / Read (ดึงรายการเรียง id DESC) / Update (ปรับสต็อก $\pm 1$ ทันที) / Delete (ลบตาม ID) | [ProductRepositoryImpl.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/stock/data/repository/ProductRepositoryImpl.kt) | **5** |
+| **2. สถาปัตยกรรม MVVM & Repository** | แยกเลเยอร์ชัดเจน / ไม่เรียก SDK ตรงใน UI / หมุนจอแล้ว State ไม่หาย | [ProductViewModel.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/stock/ui/viewmodel/ProductViewModel.kt) | **4** |
+| **3. การสร้าง UI ด้วย Jetpack Compose** | ฟอร์ม OutlinedTextField, Button, LazyColumn, Card สวยงาม / **รองรับ Adaptive 2-Column Split ในแนวนอน** | [ProductStockContent.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/stock/ui/screen/ProductStockContent.kt) | **3** |
+| **4. Asynchronous & Coroutines** | `viewModelScope.launch` และ Network I/O บน `Dispatchers.IO` ลื่นไหลไม่กระตุก | มีการสลับ Thread สำหรับ Network Request ทั้งหมด | **3** |
+| **รวม** | | | **15** |
 
 ---
 
-### 🔵 ส่วนที่ 2: ข้อ 2 ระบบจัดการสต็อกสินค้าชุมชนบน Cloud Database (`feature/stock`)
+## 🏛️ สถาปัตยกรรมและการทำงานของซอร์สโค้ด (Architecture Details)
 
-#### 2.1 `data/model/Product.kt` (Model & JSON Serialization)
-- **`Product`**: Data Class ติดตั้ง `@Serializable` สำหรับใช้งานร่วมกับ `kotlinx.serialization`
-- **`@SerialName("product_name")`** & **`@SerialName("stock_qty")`**: Mapping ชื่อคอลัมน์ใน Supabase PostgreSQL กับชื่อ Property ใน Kotlin
-
-#### 2.2 `data/remote/SupabaseClientProvider.kt` (Cloud Connection)
-- **`SupabaseClientProvider`**: Singleton Object ถือครอง instance ของ `SupabaseClient` ติดตั้งฟีเจอร์ `Postgrest` สำหรับทำ RESTful Queries ไปยัง Supabase Cloud
-
-#### 2.3 `data/repository/ProductRepository.kt` & `ProductRepositoryImpl.kt` (Supabase CRUD)
-- **`ProductRepository`**: Interface กำหนดสัญญา CRUD: `addProduct`, `getProducts`, `updateStock`, `deleteProduct`
-- **`ProductRepositoryImpl`**: สั่งงาน Supabase SDK บน `Dispatchers.IO`:
-  - **C (Create)**: `supabaseClient.postgrest["products"].insert(product)`
-  - **R (Read)**: `supabaseClient.postgrest["products"].select { order("id", Order.DESCENDING) }.decodeList<Product>()`
-  - **U (Update)**: `supabaseClient.postgrest["products"].update({ set("stock_qty", newStock) }) { filter { eq("id", id) } }`
-  - **D (Delete)**: `supabaseClient.postgrest["products"].delete { filter { eq("id", id) } }`
-
-#### 2.4 `ui/viewmodel/ProductViewModel.kt` (UI State & Network Operations)
-- **`ProductStockUiState`**: Immutable State ถือช่องกรอก, รายการสินค้า `List<Product>`, สถานะโหลด และข้อความแจ้งเตือน
-- **`ProductViewModel`**:
-  - **`addProduct()`**: ตรวจสอบชื่อ, สต็อก ($\ge 0$), และราคา ($\ge 0$) แล้วสั่งยิง Insert ขึ้น Cloud
-  - **`updateStock(product, delta)`**: คำนวณจำนวนสต็อกใหม่ (`product.stockQty + delta`) ตรวจสอบไม่ให้ติดลบ แล้วส่งคำสั่ง Update ไปยัง Supabase ทันที
-  - **`deleteProduct(product)`**: ส่งคำสั่ง Delete ลบแถวสินค้าตาม `id`
-
-#### 2.5 `ui/screen/ProductStockScreen.kt` & `ProductStockContent.kt` (Compose UI)
-- **TopBar**: แสดงชื่อแอปพลิเคชัน พร้อมปุ่ม Refresh สั่งดึงรายการล่าสุด
-- **Form Card**: ฟอร์มรับข้อมูล "ชื่อสินค้า", "จำนวนคงเหลือ", "ราคา" พร้อมปุ่ม "บันทึกขึ้น Supabase"
-- **LazyColumn & ProductStockCard**: แสดงการ์ดสินค้าแต่ละรายการ มีปุ่ม `+1` / `-1` สต็อก และปุ่มถังขยะสีแดงสั่งลบสินค้า
+### 1. การแบ่ง Layer ตามหลัก Clean Architecture & MVVM
+- **Model Layer (`data/model`):**
+  - [Transaction.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/expense/data/model/Transaction.kt): เก็บโครงสร้างข้อมูลรายการ แปลงเป็น CSV Row String (`toCsvRow()`) และ Parse กลับเป็น Object (`fromCsvRow()`)
+  - [Product.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/stock/data/model/Product.kt): ติดตั้ง `@Serializable` และ `@SerialName` สำหรับ Mapping คอลัมน์ PostgreSQL บน Supabase
+- **Repository Layer (`data/repository`):**
+  - [TransactionRepositoryImpl.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/expense/data/repository/TransactionRepositoryImpl.kt): จัดการไฟล์ I/O ทั้งการเขียนแบบ Append, อ่าน Parse ทีละบรรทัด, ลบไฟล์ และก๊อปปี้ไฟล์ไปยังโฟลเดอร์สาธารณะ `Downloads` บน `Dispatchers.IO`
+  - [ProductRepositoryImpl.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/stock/data/repository/ProductRepositoryImpl.kt): จัดการคำสั่ง CRUD สื่อสารกับ Supabase Postgrest REST API บน `Dispatchers.IO` พร้อมระบบ Fallback Local Demo Mode
+- **ViewModel Layer (`ui/viewmodel`):**
+  - [TransactionViewModel.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/expense/ui/viewmodel/TransactionViewModel.kt) & [ProductViewModel.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/stock/ui/viewmodel/ProductViewModel.kt): ถือครอง UI State แบบ Immutable (`StateFlow`) คำนวณยอดเงินคงเหลือสุทธิ และไม่สูญหายเมื่อหมุนหน้าจอ
+- **View Layer (`ui/screen` & `MainActivity.kt`):**
+  - [MainActivity.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/MainActivity.kt): ทางเข้าหลักพร้อม `NavigationBar` (Bottom Navigation) สลับหน้าข้อ 1 และ ข้อ 2
+  - **State Hoisting & Responsive Layout:** แยกเป็น Stateful Screen และ Stateless Content โดยในแนวนอน (Landscape) จะแสดงผลแบบ **2-Column Side-by-Side** (ฝั่งซ้ายเป็นฟอร์ม Scrollable และฝั่งขวาเป็น LazyColumn)
 
 ---
 
-### 🟣 ส่วนที่ 3: แอปรวมทางเข้าหลัก (`MainActivity.kt`)
+## 🎬 บทสาธิตการนำเสนอจริงต่อหน้าผู้สอน (Live Demo Walkthrough)
 
-#### `MainActivity.kt`
-- ทำหน้าที่เป็นทางเข้าหลักของแอปพลิเคชัน (Main Entry Point)
-- สร้าง Instance ของทั้ง `TransactionViewModel` และ `ProductViewModel` ผ่าน `viewModels` delegate (Retained State เมื่อหมุนหน้าจอ)
-- ใช้ **`Scaffold` + `NavigationBar` (Bottom Navigation)**:
-  - **Tab 1: "ข้อ 1: CSV"**: เรียกแสดงผล `TransactionScreen(viewModel = transactionViewModel)`
-  - **Tab 2: "ข้อ 2: Supabase"**: เรียกแสดงผล `ProductStockScreen(viewModel = productViewModel)`
+### 🟢 ข้อที่ 1 (CSV Expense Tracker):
+1. **การเปิดใช้งาน:** เปิดแอป เลือกแท็บ **`ข้อ 1: CSV`**
+2. **การบันทึกรายการ:**
+   - กรอกชื่อรายการ "เงินเดือน", จำนวนเงิน "20000", เลือก "รายรับ" -> กด "บันทึก"
+   - กรอกชื่อรายการ "ค่าอาหาร", จำนวนเงิน "500", เลือก "รายจ่าย" -> กด "บันทึก"
+   - ชี้ให้อาจารย์เห็นยอดคงเหลือสุทธิคำนวณอัตโนมัติถูกต้อง (`฿ 19,500.00`)
+3. **การส่งออกไฟล์ CSV:**
+   - กดปุ่ม **"ส่งออก CSV"** -> มี Snackbar แจ้งว่าส่งออกสำเร็จที่ `/sdcard/Download/transactions_exported.csv`
+4. **ตรวจสอบไฟล์ใน Device File Explorer:**
+   - เปิด **View -> Tool Windows -> Device File Explorer** ใน Android Studio
+   - เปิดดูไฟล์ใน Internal Storage: `/data/data/com.example.combinedsolutions/files/transactions.csv`
+   - เปิดดูไฟล์ใน External Downloads: `/sdcard/Download/transactions_exported.csv`
+5. **การทดสอบหมุนหน้าจอ:**
+   - กดปุ่ม Rotate หน้าจอของ Emulator เป็นแนวนอน
+   - ชี้ให้อาจารย์เห็น UI แบบ **2-Column Split** และย้ำว่ายอดคงเหลือสุทธิและประวัติไม่หายไป
+6. **การลบข้อมูล:**
+   - กดปุ่ม "ล้างข้อมูล" -> รายการหน้าจอเคลียร์หมด และไฟล์ `transactions.csv` บนเครื่องถูกลบจริง
 
----
-
-## 🎯 คำแนะนำการรันและการนำเสนอ (Live Demo Instructions)
-
-1. **การรันบน Android Studio / Emulator:**
-   - สั่ง `./gradlew :app:assembleDebug` หรือกดปุ่ม **Run App** (`com.example.combinedsolutions`)
-   - แอปจะเปิดขึ้นมาบน Emulator พร้อม Navigation Bar ด้านล่าง
-2. **การสาธิตข้อ 1 (CSV):**
-   - กรอกข้อมูลรายรับ/รายจ่าย -> กด "บันทึกข้อมูล"
-   - เปิดแถบ **View -> Tool Windows -> Device File Explorer** ไปที่ `/data/data/com.example.combinedsolutions/files/transactions.csv` เพื่อโชว์ไฟล์จริงให้อาจารย์ดู
-   - ทดสอบกดปุ่ม **Rotate Screen** ของ Emulator โชว์ว่าตัวเลขและประวัติคงอยู่ครบถ้วน
-3. **การสาธิตข้อ 2 (Supabase):**
-   - นำ URL และ Anon Key ของโปรเจกต์ Supabase ของคุณใส่ใน [SupabaseClientProvider.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/stock/data/remote/SupabaseClientProvider.kt)
-   - เปิดหน้าเบราว์เซอร์ Supabase **Table Editor -> products** ไว้ข้างๆ จอ Emulator
-   - ทดสอบกดเพิ่มสินค้า, กดปุ่ม `+1`/`-1` ปรับสต็อก และกดปุ่มลบ เพื่อโชว์การเปลี่ยนแปลง Real-time บน Supabase
+### 🔵 ข้อที่ 2 (Supabase Community Stock):
+1. **การเปิดใช้งาน:** เปิดแอป เลือกแท็บ **`ข้อ 2: Supabase`**
+2. **การใส่ Supabase Key (หากทดสอบบน Cloud จริง):**
+   - ใส่ `SUPABASE_URL` และ `SUPABASE_ANON_KEY` ใน [SupabaseClientProvider.kt](file:///C:/Users/froke/.gemini/antigravity-ide/scratch/android_exam_solutions/app/src/main/java/com/example/combinedsolutions/feature/stock/data/remote/SupabaseClientProvider.kt)
+3. **Live Demo ควบคู่ Table Editor:**
+   - เปิดเบราว์เซอร์ Supabase **Table Editor -> ตาราง products** ไว้ข้างๆ จอ Emulator
+   - **Create:** กรอกชื่อสินค้า, จำนวน, ราคา -> กด "บันทึกขึ้น Supabase" -> โชว์แถวใหม่โผล่บน Supabase ทันที
+   - **Update:** กดปุ่ม `+1` หรือ `-1` บนการ์ดสินค้า -> ค่า `stock_qty` บน Supabase เปลี่ยนตาม Real-time
+   - **Delete:** กดปุ่มถังขยะสีแดง -> แถวข้อมูลในตารางบน Supabase ถูกลบออกทันที
+4. **การทดสอบหมุนหน้าจอ:** หมุนจอโชว์ 2-Column Responsive Layout สวยงาม
