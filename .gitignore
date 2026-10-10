@@ -1,0 +1,20 @@
+# Gradle files
+.gradle/
+build/
+*/build/
+*/.gradle/
+app/build/
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+.navigation/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Local configuration file
+local.properties
