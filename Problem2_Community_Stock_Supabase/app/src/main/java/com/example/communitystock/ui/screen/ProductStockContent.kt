@@ -61,13 +61,15 @@ fun ProductStockContent(
     onStockIncrement: (Product) -> Unit,
     onStockDecrement: (Product) -> Unit,
     onDeleteClick: (Product) -> Unit,
-    onRefreshClick: () -> Unit
+    onRefreshClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val decimalFormat = DecimalFormat("#,##0.00")
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Scaffold(
+        modifier = modifier,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Column(

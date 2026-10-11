@@ -1,8 +1,11 @@
 package com.example.communitystock.ui.screen
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.example.communitystock.ui.viewmodel.ProductViewModel
 
@@ -16,17 +19,26 @@ fun ProductStockScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.message) {
+        uiState.message?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.dismissMessage()
+        }
+    }
 
     ProductStockContent(
-        state = uiState,
+        uiState = uiState,
+        snackbarHostState = snackbarHostState,
         onNameChange = viewModel::onNameChange,
         onStockChange = viewModel::onStockChange,
         onPriceChange = viewModel::onPriceChange,
-        onAddProduct = viewModel::addProduct,
-        onAdjustStock = viewModel::adjustStock,
-        onDeleteProduct = viewModel::deleteProduct,
-        onRefresh = viewModel::loadProducts,
-        onDismissMessage = viewModel::dismissMessage,
+        onAddClick = viewModel::addProduct,
+        onStockIncrement = { product -> viewModel.adjustStock(product, 1) },
+        onStockDecrement = { product -> viewModel.adjustStock(product, -1) },
+        onDeleteClick = viewModel::deleteProduct,
+        onRefreshClick = viewModel::loadProducts,
         modifier = modifier
     )
 }

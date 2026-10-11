@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 /**
  * UI State สำหรับระบบจัดการสต็อกสินค้า
  */
-data class ProductUiState(
+data class ProductStockUiState(
     val products: List<Product> = emptyList(),
     val nameInput: String = "",
     val stockInput: String = "",
@@ -22,6 +22,8 @@ data class ProductUiState(
     val isLoading: Boolean = false,
     val message: String? = null
 )
+
+typealias ProductUiState = ProductStockUiState
 
 class ProductViewModel(
     private val repository: ProductRepository
