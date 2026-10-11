@@ -4,6 +4,7 @@
 - **ชื่อ-นามสกุล:** นายกฤษฎา ศรีคิลิน
 - **รหัสนักศึกษา:** 67102122111
 - **รายวิชา:** การปฏิบัติการพัฒนา Android ด้วย Kotlin (Android Mobile Development)
+- **วันเวลาที่นำเสนอ:** วันที่ 11 ตุลาคม 2569 เวลา 9:00 น. เป็นต้นไป (ห้องพักครู ชั้น 3 อาคาร 7)
 - **GitHub Repository:** [https://github.com/Frokezero/F111.git](https://github.com/Frokezero/F111.git)
 
 ---
@@ -45,7 +46,7 @@ android_exam_solutions/
 ├── Problem2_Community_Stock_Supabase/ # [โปรเจกต์แยก ข้อ 2] สำหรับเปิดตรงใน Android Studio
 ├── problem1_demo.gif           # GIF สาธิตการทำงาน ข้อ 1
 ├── problem2_demo.gif           # GIF สาธิตการทำงาน ข้อ 2
-├── MASTER_GUIDE.md             # คู่มือคำอธิบายซอร์สโค้ดและขั้นตอนการสาธิตอย่างละเอียด
+├── MASTER_GUIDE.md             # คู่มือคำอธิบายซอร์สโค้ดอย่างละเอียดและสคริปต์การนำเสนอ
 └── README.md                   # เอกสารข้อมูลการส่งงานนักศึกษา
 ```
 
